@@ -99,3 +99,9 @@
 .hero-hidden-gradient{pointer-events:none}
 .hero-aside{pointer-events:none}
 .hero-aside .hero-ctas,.hero-aside a,.hero-aside .hero-lede{pointer-events:auto}
+
+/* button hover consistency: black -> white, white -> black */
+.btn-black:hover,.submit-button:hover,.cf-submit:hover,.ar-btn:hover,.btn-black.absolute:hover{background:#fff!important;background-color:#fff!important;color:#1a1a1a!important;box-shadow:0 0 0 1px rgba(26,26,26,.12) inset}
+.btn-white:hover,.btn-white.absolute:hover,.sd-book:hover{background:#1a1a1a!important;background-color:#1a1a1a!important;color:#fff!important}
+.btn-black:hover *,.submit-button:hover *,.cf-submit:hover *,.ar-btn:hover *{color:#1a1a1a!important}
+.btn-white:hover *,.sd-book:hover *{color:#fff!important}
