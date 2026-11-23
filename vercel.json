@@ -1,0 +1,13 @@
+{
+  "rewrites": [
+    { "source": "/services", "destination": "/services.html" },
+    { "source": "/about", "destination": "/about.html" },
+    { "source": "/booking", "destination": "/booking.html" },
+    { "source": "/reviews", "destination": "/reviews.html" },
+    { "source": "/contact", "destination": "/contact.html" },
+    { "source": "/journal", "destination": "/journal.html" }
+  ],
+  "headers": [
+    { "source": "/assets/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800" }] }
+  ]
+}

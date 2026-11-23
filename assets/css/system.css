@@ -1,0 +1,96 @@
+/* MIRELLE design system layer — loaded last on every page.
+   One card shape, one button shape, one hover language, one reveal motion. */
+:root{--ease:cubic-bezier(.2,.7,.2,1);--r-card:1.6em;--r-img:1.1em;--r-btn:.6em;--sh-card:0 .3em 2em rgba(43,29,22,.06);--sh-hover:0 1.1em 3em rgba(43,29,22,.15)}
+
+/* ---------- cards: one radius ---------- */
+.sc-card,.tm-card,.jn-card,.ab-val,.ct-card,.rv-card,.ar-cta,.sd-price,.sd-cover,.ar-cover,.ab-story__img,.ab-tl__img,.ba-card{border-radius:var(--r-card)}
+.ct-loc__card{border-radius:var(--r-card)}
+.sc-img,.jn-img,.sd-gal div,.ba-img,.tm-card__img{border-radius:var(--r-img)}
+.fq-item,.ct-acc details{border-radius:1.2em}
+
+/* reviews page: same white card as the rest of the site (was a bordered table) */
+.rv-grid{border:0;gap:1.4em}
+.rv-card{background:#fff;border:0;box-shadow:var(--sh-card);padding:2em 1.9em}
+.pg-sec:has(.rv-grid){background:linear-gradient(180deg,#F3E7DA,#EAD3BF)}
+
+/* booking page: rounded option cards */
+.pg-sec:has(.bk){background:#FBF5EE}
+.opt{background:#fff;border:1px solid rgba(205,160,127,.45);border-radius:1.2em;padding:1.3em 1.4em;transition:border-color .3s,background .3s,translate .45s var(--ease),box-shadow .45s}
+.opt:hover{border-color:#CDA07F;translate:0 -.25em;box-shadow:var(--sh-card)}
+.opt.is-on{background:#2B1D16;border-color:#2B1D16;color:#F7EFE7}
+.notice{border-radius:1.2em}.cal-inline{border-radius:var(--r-card)}
+.fm input,.fm select,.fm textarea{border-radius:.7em}
+.chip,.jn-tabs .chip{border-radius:var(--r-btn);transition:background .3s,color .3s,border-color .3s,translate .35s var(--ease)}
+.chip:hover{background:#F3E7DA;border-color:#CDA07F;translate:0 -.12em}
+.chip.is-on:hover{background:#2B1D16}
+
+/* ---------- buttons: one shape, one hover ---------- */
+.btn-black,.btn-white,.submit-button,.cf-submit,.fo .cf-submit,.ar-btn,.sd-book,.sc-btn{border-radius:var(--r-btn)}
+.btn-black.absolute,.btn-white.absolute{border-radius:var(--r-btn) 0 0 0}
+.cf-submit,.fo .cf-submit,.ar-btn,.sd-book{font-weight:500;font-size:.95em;padding:1em 1.8em;display:inline-flex;align-items:center;justify-content:center;gap:.6em}
+.btn-black,.btn-white,.submit-button,.cf-submit,.ar-btn,.sd-book,.sc-btn{transition:background-color .35s,color .35s,border-color .35s,translate .4s var(--ease),box-shadow .4s}
+.btn-black:hover,.submit-button:hover,.cf-submit:hover,.ar-btn:hover{background:#CDA07F;color:#2B1D16}
+.btn-white:not(.absolute):hover,.sd-book:hover{background:#CDA07F;color:#2B1D16}
+.btn-black:not(.absolute):hover,.btn-white:not(.absolute):hover,.submit-button:hover,.cf-submit:hover,.ar-btn:hover,.sd-book:hover,.sc-btn:hover{translate:0 -.15em;box-shadow:0 .7em 1.6em rgba(43,29,22,.16)}
+.btn-black:active,.btn-white:active,.cf-submit:active,.ar-btn:active,.sd-book:active,.sc-btn:active,.submit-button:active{translate:0 0;box-shadow:none}
+.tm-card__link:hover{color:#8A5A3B}
+
+/* ---------- card hover: lift + deeper shadow + image zoom ---------- */
+.sc-card,.tm-card,.jn-card,.ab-val,.rv-card,.ct-loc__card{transition:box-shadow .5s var(--ease),translate .5s var(--ease),background .4s}
+.sc-img img,.tm-card__img img,.jn-img img,.ab-story__img img,.ab-tl__img img,.sd-gal img,.ct-loc__card img{transition:transform 1.1s var(--ease)}
+@media (hover:hover){
+  .sc-card:hover,.tm-card:hover,.jn-card:hover,.ab-val:hover,.rv-card:hover,.ct-loc__card:hover{translate:0 -.45em;box-shadow:var(--sh-hover)}
+  .sc-card:hover .sc-img img,.tm-card:hover .tm-card__img img,.jn-card:hover .jn-img img,.ab-story__img:hover img,.ab-tl__img:hover img,.sd-gal div:hover img,.ct-loc__card:hover img{transform:scale(1.06)}
+  .ab-val:hover .ab-val__ic{background:#CDA07F;color:#fff}
+}
+.ab-val__ic{transition:background .4s,color .4s}
+.jn-card:hover{background:#EBD3C0}
+
+/* accordions + form focus */
+.fq-item,.ct-acc details{transition:background .3s,border-color .3s}
+.fq-item:hover{border-color:#8A5A3B;border-style:solid}
+.ct-acc details:hover{border-color:#CDA07F}
+@keyframes fqIn{from{opacity:0;translate:0 -.5em}to{opacity:1;translate:0 0}}
+.fq-item[open]>:not(summary),.ct-acc details[open]>:not(summary){animation:fqIn .55s var(--ease)}
+.cf input:focus,.cf textarea:focus,.cf select:focus,.fo .cf input:focus,.fo .cf select:focus,.fm input:focus,.fm select:focus,.fm textarea:focus{outline:0;border-color:#CDA07F;box-shadow:0 0 0 .25em rgba(205,160,127,.28)}
+
+/* ---------- hero entrance ---------- */
+@keyframes heroZoom{from{scale:1.12}to{scale:1}}
+@keyframes fadeUp{from{opacity:0;translate:0 1.4em}to{opacity:1;translate:0 0}}
+.ab-hero__bg img{animation:heroZoom 2s var(--ease) both}
+.ab-hero__in>.ab-pill,.ab-hero__in>p,.pg-hero__in .pg-eyebrow,.pg-hero__in>p{animation:fadeUp .9s var(--ease) .2s both}
+
+/* ---------- scroll reveal (class added by motion.js, removed after) ---------- */
+.js .rv{opacity:0;transform:translateY(2.4em)}
+.js .rv.rv-in{opacity:1;transform:none;transition:opacity 1s var(--ease) var(--d,0s),transform 1.1s var(--ease) var(--d,0s)}
+
+@media (prefers-reduced-motion:reduce){
+  .js .rv{opacity:1;transform:none}
+  .ab-hero__bg img,.ab-hero__in>*,.pg-hero__in>*{animation:none}
+  *{transition-duration:.01ms!important}
+}
+.jn-tabs .chip:hover,.jn-tabs .chip.is-on:hover{background:none;border:0;translate:0 0;color:#2B1D16}
+
+/* hero breathing room under the fixed header (all image heroes: About, Services, Contact, Journal) */
+.ab-hero__in{padding-top:8.8em}
+.ab-hero{height:min(48em,760px)}
+@media (max-width:767px){.ab-hero__in{padding-top:7.4em}.ab-hero{height:auto;min-height:36em}}
+.ct-hero .ab-hero__bg img{object-position:50% 0!important}
+.ct-hero .ab-hero__bg::after{background:linear-gradient(180deg,rgba(43,29,22,.74),rgba(43,29,22,.52) 36%,rgba(43,29,22,.12) 62%,rgba(43,29,22,0))}
+
+/* home steps: rounded progress line */
+.step-progress-bar-wrap{border-radius:99em}
+.step-progress-bar{border-radius:99em}
+
+/* home hero: show the whole lounge photo (no crop); a blurred copy fills the extra height */
+.hero__section-bg{position:relative;width:100%;overflow:hidden;background:#CDA07E}
+.hero__section-bg::before{content:"";position:absolute;inset:-6%;background:url(../images/hero-lounge.webp) 50% 40%/cover no-repeat;filter:blur(34px) saturate(1.05)}
+.hero__bg-img--web{z-index:1;inset:auto 0 auto 0;top:calc((100% - 48.12vw)*.4);height:48.12vw;width:100%;object-fit:cover;object-position:50% 50%;-webkit-mask-image:linear-gradient(180deg,transparent 0,#000 16%,#000 88%,transparent 100%);mask-image:linear-gradient(180deg,transparent 0,#000 16%,#000 88%,transparent 100%)}
+@media (max-width:991px){
+  .hero__bg-img--tablet,.hero__bg-img--mobile{z-index:1;object-fit:cover;object-position:14% 100%}
+}
+
+/* home hero: two-line description sitting right under the title */
+.hero-aside{top:19.6em;width:25em}
+.hero-lede{max-width:25em}
+@media screen and (max-width:991px){.hero-aside{top:17.5em;width:26em}}

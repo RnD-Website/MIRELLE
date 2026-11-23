@@ -1,0 +1,61 @@
+/* MIRELLE — homepage-only additions */
+.hero-aside{position:absolute;left:2.2em;top:21em;width:22em;z-index:3;color:#fff;text-shadow:0 .04em .9em rgba(30,30,30,.55)}
+.hero-lede{font-size:1.05em;line-height:150%;letter-spacing:-.01em}
+.hero-ctas .btn-black,.hero-ctas .btn-white{font-size:.82em;padding:1em 1.4em;white-space:nowrap}
+.hero-ctas .btn-white{box-shadow:0 0 0 .5px var(--line-dark) inset}
+@media screen and (max-width:991px){.hero-aside{width:24em;top:19em}.hero-title{width:44em}}
+@media screen and (max-width:767px){.hero-aside{display:none}}
+
+.hero-title .h1-style,.hero-title h1{color:#fff;text-shadow:0 .02em 1.4em rgba(30,30,30,.18)}
+.hero-plus{display:inline-block;font-family:var(--sans);font-weight:300;font-size:.9em;color:#8A5A3B;margin-left:.12em;line-height:1}
+.hero-aside .pg-eyebrow,.hero-aside [class*=eyebrow]{color:#fff}
+
+/* TV poster: full-bleed beauty image, headline sits on the cream side (as in the reference) */
+.tv__screen{display:block;background:#F6E8DE}
+.tv__img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:60% 40%}
+.tv__copy{position:absolute;left:0;top:0;bottom:0;width:46%;background:none;color:var(--black);z-index:1}
+.tv__eyebrow{color:var(--accent)}
+.tv__sub{opacity:.75}
+@media (max-width:767px){.tv__copy{display:none}}
+
+/* Before / After results */
+.ba{padding:6em 2em 6em;border-top:.5px solid var(--line-beige);display:flex;flex-direction:column;align-items:center}
+.ba-head{text-align:center;display:flex;flex-direction:column;align-items:center;gap:1.1em;margin-bottom:3.4em}
+.ba-title{font-size:4em;margin:0}
+.ba-sub{max-width:26em;opacity:.75}
+.ba-rows{display:flex;flex-direction:column;gap:2.4em;width:100%;max-width:62em}
+.ba-row{display:grid;grid-template-columns:1fr 17em 17em;gap:1.2em;align-items:center}
+.ba-label{position:relative;display:flex;align-items:center;justify-content:flex-start}
+.ba-label span{position:relative;z-index:1;background:#fff;border-radius:.9em;padding:.9em 1.3em;font-size:.82em;box-shadow:0 .2em 1em rgba(43,29,22,.08)}
+.ba-label i{position:absolute;left:2em;right:-1.2em;top:50%;height:1px;background:rgba(205,160,127,.7);transform-origin:left;transform:scaleX(var(--ln,1))}
+.ba-card{margin:0;background:#fff;border-radius:1.5em;padding:.6em .6em 0;box-shadow:0 .3em 2em rgba(43,29,22,.07);transition:box-shadow .5s}
+.ba-card:hover{box-shadow:0 .8em 2.6em rgba(138,90,59,.2)}
+.ba-img{aspect-ratio:4/4.6;overflow:hidden;border-radius:1.1em;background:var(--beige,#EBD3C0)}
+.ba-img img{width:100%;height:100%;object-fit:cover}
+.ba-card figcaption{font-family:var(--serif);font-size:1.6em;text-align:center;padding:.7em 0 .8em}
+.ba-more{margin-top:3em;display:inline-flex;gap:.6em;align-items:center;font-size:.9em;color:#8A5A3B;text-decoration:none;border-bottom:1px solid #8A5A3B;padding-bottom:.25em}
+.ba-more svg{width:1em;height:1em;transition:transform .3s}
+.ba-more:hover svg{transform:translateX(.3em)}
+@media(max-width:991px){.ba{padding:4em 1.4em}.ba-title{font-size:2.4em}.ba-row{grid-template-columns:1fr 1fr}.ba-label{grid-column:1/-1}.ba-label i{display:none}}
+
+/* Home FAQ */
+.fq-sec{position:relative;background:#FBF5EE;border-top:.5px solid var(--line-beige);padding:6em 2em}
+.fq-wrap{max-width:84em;margin:0 auto}
+.fq-head{display:flex;flex-direction:column;align-items:center;text-align:center;gap:1.2em;margin-bottom:3.4em}
+.fq-pill{font-size:.78em;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:#8A5A3B;display:inline-flex;align-items:center;gap:.7em}
+.fq-pill::before{content:"";width:.45em;height:.45em;border-radius:50%;background:#8A5A3B}
+.fq-head .h2-style.black.no-indent{display:block;max-width:14em}
+.fq-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.4em;align-items:start}
+.fq-col{display:grid;gap:1.1em}
+.fq-item{background:rgba(255,255,255,.35);border:1px dashed rgba(138,90,59,.45);border-radius:1.2em;padding:0 1.8em;transition:background .3s}
+.fq-item[open]{background:#fff}
+.fq-item summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:1.4em;padding:1.5em 0;font-size:1.3em;line-height:1.25;font-family:var(--serif,serif);color:#2B1D16}
+.fq-item summary::-webkit-details-marker{display:none}
+.fq-item summary::after{content:"+";flex:none;font-family:'Inter Tight',sans-serif;font-size:1.3em;line-height:1;transition:transform .3s}
+.fq-item[open] summary::after{transform:rotate(45deg)}
+.fq-item p{margin:0;padding:0 0 1.6em;font-size:.95em;line-height:1.65;opacity:.75;max-width:34em}
+@media(max-width:900px){.fq-grid{grid-template-columns:1fr}.fq-sec{padding:4em 1.2em}}
+
+/* home TV: showreel video fills the screen */
+.tv__screen{display:block}
+.tv__video{display:block;width:100%;height:100%;object-fit:cover;background:#E9D3C3}
