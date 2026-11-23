@@ -94,3 +94,8 @@
 .hero-aside{top:19.6em;width:25em}
 .hero-lede{max-width:25em}
 @media screen and (max-width:991px){.hero-aside{top:17.5em;width:26em}}
+
+/* hero buttons must be clickable: invisible overlays never take clicks */
+.hero-hidden-gradient{pointer-events:none}
+.hero-aside{pointer-events:none}
+.hero-aside .hero-ctas,.hero-aside a,.hero-aside .hero-lede{pointer-events:auto}
