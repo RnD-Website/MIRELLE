@@ -129,7 +129,6 @@
       root.innerHTML = '<div class="lb-top"><span class="lb-pill"><i></i><b></b></span><span class="lb-clock"><i class="lb-live-dot"></i><em></em></span></div>'
         + '<div id="lb-main"></div>'
         + '<div class="lb-stats" id="lb-stats">' + ['Chairs free', 'Avg. wait', 'Booked today', 'Walk-ins waiting'].map(function (l) { return '<div class="lb-stat"><span>' + l + '</span><div><b class="lb-num">–</b><em></em></div></div>'; }).join('') + '</div>'
-        + '<div class="lb-card lb-feedcard"><div class="lb-feedhead"><div class="lb-k">Live activity</div><span class="lb-streaming"><i></i>Streaming</span></div><ul id="lb-feed" class="lb-feed"></ul></div>'
         + '<div class="lb-note" id="lb-note"><span>Schedule update</span><p></p></div>';
       board.key = '';
     }
@@ -172,13 +171,6 @@
     var st = statsFor(s, w), cells = root.querySelectorAll('.lb-stat');
     st.forEach(function (x, i) { setStat(cells[i], x[1]); cells[i].querySelector('em').textContent = x[2]; });
 
-    /* feed */
-    if (!board.started) {
-      board.started = true; board.nextEv = Date.now() + 2500;
-      for (var k = 0; k < 4; k++) addEvent(s, w, (4 - k) * 21000 + 4000);
-    }
-    if (Date.now() >= board.nextEv) { addEvent(s, w); board.nextEv = Date.now() + 4200 + Math.random() * 3800; }
-    ago();
     var noteEl = $('#lb-note', root), note = NOTES[Math.floor(Date.now() / 8000) % NOTES.length];
     if (noteEl.dataset.i !== String(note[0])) { noteEl.dataset.i = note[0]; noteEl.className = 'lb-note ' + note[1]; var p = $('p', noteEl); p.style.animation = 'none'; void p.offsetWidth; p.style.animation = ''; p.textContent = note[0]; }
   }
