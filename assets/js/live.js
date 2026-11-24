@@ -1,0 +1,198 @@
+/* MIRELLE – live studio board (home) + floating concierge chat (all pages)
+   Demo logic: the board is simulated from the visitor's clock and the opening hours in data.js.
+   To go truly live, replace tick() data with a fetch() to your booking system. */
+(function () {
+  'use strict';
+  var M = window.MIRELLE || {}, C = M.config || M;
+  var DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+  var fmt = function (m) { var h = Math.floor(m / 60), mm = m % 60, ap = h >= 12 ? 'pm' : 'am'; h = h % 12 || 12; return h + ':' + pad(mm) + ' ' + ap; };
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+
+  /* ---------- opening hours from data.js ---------- */
+  function hoursFor(d) {
+    var out = null;
+    (C.hours || []).forEach(function (row) {
+      var names = row[0].split(/\s*[–-]\s*/), a = DAYS.indexOf(names[0]), b = names[1] ? DAYS.indexOf(names[1]) : a;
+      if (a < 0) return;
+      var hit = false; for (var i = a; ; i = (i + 1) % 7) { if (i === d) hit = true; if (i === b) break; }
+      if (!hit) return;
+      var t = row[1].match(/(\d+):(\d+)\D+(\d+):(\d+)/);
+      out = t ? [(+t[1]) * 60 + (+t[2]), (+t[3]) * 60 + (+t[4])] : null;
+    });
+    return out;
+  }
+  function nextOpen(now) {
+    for (var k = 1; k <= 7; k++) { var d = (now.getDay() + k) % 7, h = hoursFor(d); if (h) return { day: DAYS[d], at: h[0], tomorrow: k === 1 }; }
+    return null;
+  }
+
+  /* ---------- simulated day ---------- */
+  var SERV = ['Signature Cut & Style', 'Global Colour & Gloss', 'Signature Facial', 'Blowout & Styling', 'Keratin Smoothing', 'Glow Facial', 'Repair Ritual', 'Bridal Trial'];
+  var PEOPLE = ['Isabella', 'Amara', 'Clara', 'Sofia'];
+  var INIT = ['A. R.', 'M. K.', 'S. L.', 'N. B.', 'H. T.', 'J. P.', 'L. D.', 'R. F.', 'E. W.', 'T. C.', 'K. S.', 'D. M.'];
+  var SLOT = 45;
+
+  function build(now) {
+    var h = hoursFor(now.getDay());
+    if (!h) return { closed: true, next: nextOpen(now), slots: [], now: now };
+    var mins = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
+    var slots = [], n = 0;
+    for (var t = h[0]; t + SLOT <= h[1]; t += SLOT, n++) {
+      var st = mins >= t + SLOT ? 'done' : mins >= t ? 'now' : 'up';
+      slots.push({ n: n + 1, t: t, st: st, who: INIT[n % INIT.length], svc: SERV[(n * 3 + now.getDay()) % SERV.length], by: PEOPLE[(n + now.getDay()) % PEOPLE.length], p: st === 'now' ? Math.min(1, (mins - t) / SLOT) : 0 });
+    }
+    var open = mins >= h[0] && mins < h[1];
+    var nowIdx = -1; slots.forEach(function (s, i) { if (s.st === 'now') nowIdx = i; });
+    var firstUp = -1; slots.forEach(function (s, i) { if (firstUp < 0 && s.st === 'up') firstUp = i; });
+    var after = mins >= h[1] || (slots.length && slots.every(function (s) { return s.st === 'done'; }));
+    return { closed: false, open: open && !after, before: mins < h[0], after: after, hours: h, slots: slots, nowIdx: nowIdx, firstUp: firstUp, mins: mins, now: now, next: nextOpen(now) };
+  }
+  var tok = function (n) { return 'M-' + (n < 10 ? '00' : n < 100 ? '0' : '') + n; };
+
+  /* ---------- token (stored only in this browser) ---------- */
+  function myToken() { try { var o = JSON.parse(localStorage.getItem('mirelle_token') || 'null'); if (o && o.day === new Date().toDateString()) return o; } catch (e) {} return null; }
+  function getToken(s) {
+    var t = myToken(); if (t) return t;
+    var last = s.slots.length ? s.slots.filter(function (x) { return x.st !== 'up'; }).length : 0;
+    var o = { day: new Date().toDateString(), n: Math.min(s.slots.length || 1, last + 3 + Math.floor(Math.random() * 3)) };
+    try { localStorage.setItem('mirelle_token', JSON.stringify(o)); } catch (e) {}
+    return o;
+  }
+  function waitText(s) {
+    if (s.closed || !s.open) return null;
+    var cur = s.nowIdx >= 0 ? s.nowIdx + 1 : s.firstUp + 1, ahead = Math.max(0, Math.min(s.slots.length, 3) - 0);
+    return { serving: tok(cur), next: tok(Math.min(s.slots.length, cur + 1)), wait: Math.max(5, ahead * 10 + Math.round((1 - (s.slots[s.nowIdx] ? s.slots[s.nowIdx].p : 0)) * 12)) };
+  }
+
+  /* ---------- schedule updates ticker ---------- */
+  var NOTES = [
+    ['Colour appointments are running about 10 minutes behind.', 'warn'],
+    ['Two same-day slots just opened — tap “Book appointment”.', 'good'],
+    ['Bridal trials today: please arrive 10 minutes early.', ''],
+    ['Walk-ins welcome for blowouts while chairs are free.', 'good'],
+    ['Facial room is on schedule — no delays.', 'good']
+  ];
+
+  /* ===================== HOME BOARD ===================== */
+  function renderBoard() {
+    var root = $('#live-board'); if (!root) return;
+    var s = build(new Date()), w = waitText(s), me = myToken();
+    var html = '';
+    var status = s.closed ? ['closed', 'Closed today'] : s.open ? ['open', 'Open now'] : s.before ? ['soon', 'Opens at ' + fmt(s.hours[0])] : ['closed', 'Closed for today'];
+    var reopen = s.before && s.hours ? 'Opens today at ' + fmt(s.hours[0]) : (s.closed || !s.open) && s.next ? 'Reopens ' + (s.next.tomorrow ? 'tomorrow' : s.next.day) + ' at ' + fmt(s.next.at) : '';
+    html += '<div class="lb-top"><span class="lb-pill is-' + status[0] + '"><i></i>' + status[1] + '</span><span class="lb-clock">' + fmt(s.now.getHours() * 60 + s.now.getMinutes()) + ' · live</span></div>';
+    html += '<div class="lb-grid"><div class="lb-card lb-serving">';
+    if (w) {
+      html += '<div class="lb-k">Now serving</div><div class="lb-big">' + w.serving + '</div>'
+        + '<div class="lb-meta"><div><span>Next up</span><b>' + w.next + '</b></div><div><span>Est. wait</span><b>~' + w.wait + ' min</b></div></div>';
+      var cs = s.slots[s.nowIdx];
+      if (cs) html += '<div class="lb-now"><div class="lb-nowtop"><span>' + esc(cs.svc) + ' · ' + cs.by + '</span><em>' + Math.round(cs.p * 100) + '%</em></div><div class="lb-bar"><i style="width:' + Math.round(cs.p * 100) + '%"></i></div></div>';
+    } else {
+      html += '<div class="lb-k">Walk-in queue</div><div class="lb-big lb-big--sm">' + (s.before ? 'Opening soon' : 'Closed') + '</div><p class="lb-p">' + (reopen || 'See opening hours below.') + '</p>';
+    }
+    if (me && w) {
+      var ahead = Math.max(0, me.n - (s.nowIdx >= 0 ? s.nowIdx + 1 : 0));
+      html += '<div class="lb-mine"><span>Your token</span><b>' + tok(me.n) + '</b><em>' + (ahead ? ahead + ' ahead of you' : 'You\'re up next') + '</em></div>';
+    } else if (w) {
+      html += '<button type="button" class="btn-white lb-get" data-lb-token><div>Get my token</div><div class="plus-icon"><svg viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.5"/></svg></div></button>';
+    } else {
+      html += '<a href="booking.html" data-lb-book class="btn-white lb-get"><div>Book appointment</div><div class="plus-icon"><svg viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.5"/></svg></div></a>';
+    }
+    html += '</div><div class="lb-card lb-sched"><div class="lb-k">Today\'s schedule</div>';
+    if (s.closed) html += '<p class="lb-p">The studio is closed today. ' + reopen + '.</p>';
+    else {
+      var list = s.slots, start = 0;
+      if (s.nowIdx >= 0) start = Math.max(0, s.nowIdx - 1); else if (s.firstUp >= 0) start = s.firstUp;
+      if (s.after) start = Math.max(0, list.length - 4);
+      html += '<ul class="lb-list">';
+      list.slice(start, start + 5).forEach(function (x) {
+        var lab = x.st === 'done' ? 'Done' : x.st === 'now' ? 'In the chair' : 'Upcoming';
+        html += '<li class="is-' + x.st + '"><time>' + fmt(x.t) + '</time><div><b>' + esc(x.svc) + '</b><span>' + x.who + ' · with ' + x.by + '</span></div><em>' + lab + '</em></li>';
+      });
+      html += '</ul>';
+    }
+    html += '</div></div>';
+    var note = NOTES[Math.floor(Date.now() / 7000) % NOTES.length];
+    html += '<div class="lb-note ' + note[1] + '"><span>Schedule update</span><p>' + note[0] + '</p></div>';
+    root.innerHTML = html;
+    var g = root.querySelector('[data-lb-token]');
+    if (g) g.addEventListener('click', function () { getToken(build(new Date())); renderBoard(); });
+    var c = root.querySelector('[data-lb-book]'); if (c) c.addEventListener('click', function (e) { var b = document.querySelector('[data-calendly]'); if (b) { e.preventDefault(); b.click(); } });
+  }
+
+  /* ===================== CHAT ===================== */
+  function mount() {
+    if ($('.mc-launch')) return;
+    var wa = C.whatsapp ? 'https://wa.me/' + C.whatsapp : null;
+    var d = document.createElement('div'); d.className = 'mc';
+    d.innerHTML = '<button type="button" class="mc-launch" aria-label="Open chat with MIRELLE concierge" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H11l-4.2 3.6c-.5.4-1.3.1-1.3-.6V16A2.5 2.5 0 0 1 4 13.5v-8Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="9" cy="9.5" r="1" fill="currentColor"/><circle cx="12.5" cy="9.5" r="1" fill="currentColor"/><circle cx="16" cy="9.5" r="1" fill="currentColor"/></svg><i class="mc-dot"></i></button>'
+      + '<div class="mc-teaser" hidden>Hi! Need help booking? <button type="button" aria-label="Dismiss">×</button></div>'
+      + '<section class="mc-panel" role="dialog" aria-label="MIRELLE concierge chat" hidden><header><div class="mc-av">M</div><div><b>MIRELLE Concierge</b><span><i></i>Virtual assistant · online</span></div><button type="button" class="mc-x" aria-label="Close chat">×</button></header>'
+      + '<div class="mc-log" role="log" aria-live="polite"></div><div class="mc-chips"></div>'
+      + '<form class="mc-form"><input type="text" placeholder="Ask about services, hours, booking…" aria-label="Your message" autocomplete="off" maxlength="200"><button type="submit" aria-label="Send"><svg viewBox="0 0 17 18" fill="none"><path d="M0.5 9h15M10 3l6 6-6 6" stroke="currentColor" stroke-width="1.5"/></svg></button></form></section>';
+    document.body.appendChild(d);
+    var launch = $('.mc-launch', d), panel = $('.mc-panel', d), log = $('.mc-log', d), chips = $('.mc-chips', d), form = $('.mc-form', d), inp = $('input', form), teaser = $('.mc-teaser', d);
+    var greeted = false;
+
+    function add(who, html) { var m = document.createElement('div'); m.className = 'mc-m ' + who; m.innerHTML = html; log.appendChild(m); log.scrollTop = log.scrollHeight; return m; }
+    function bot(html, delay) {
+      var t = add('bot mc-typing', '<span></span><span></span><span></span>');
+      setTimeout(function () { t.className = 'mc-m bot'; t.innerHTML = html; log.scrollTop = log.scrollHeight; wire(t); }, delay || 650);
+    }
+    function wire(el) {
+      [].forEach.call(el.querySelectorAll('[data-act]'), function (b) {
+        b.addEventListener('click', function (e) { var a = b.getAttribute('data-act'); if (a === 'book') { e.preventDefault(); openBooking(); } if (a === 'token') { e.preventDefault(); ask('Get my token'); } });
+      });
+    }
+    function openBooking() { var c = document.querySelector('[data-calendly]'); if (c) c.click(); else location.href = (M.root || '') + 'booking.html'; }
+    function setChips(list) {
+      chips.innerHTML = ''; list.forEach(function (q) { var b = document.createElement('button'); b.type = 'button'; b.textContent = q; b.addEventListener('click', function () { ask(q); }); chips.appendChild(b); });
+    }
+    var MAIN = ['Book an appointment', 'Services & prices', 'Opening hours', 'Live queue today', 'Talk to a person'];
+
+    function reply(q) {
+      var t = q.toLowerCase(), s = build(new Date());
+      if (/^(hi|hello|hey|salam|good (morning|afternoon|evening))\b/.test(t)) return 'Hello! I\'m the MIRELLE virtual assistant. I can help with booking, services, hours and today\'s queue.';
+      if (/token|queue|wait|serving|live|turn|serial/.test(t)) {
+        var w = waitText(s);
+        if (/get|my|join|take/.test(t) && w) { var k = getToken(s); renderBoard(); return 'You\'re in. Your walk-in token is <b>' + tok(k.n) + '</b>. Now serving <b>' + w.serving + '</b>, so expect roughly ' + w.wait + '+ minutes. You can follow it on the “Live studio board” on the home page.'; }
+        if (w) return 'Now serving <b>' + w.serving + '</b>, next is <b>' + w.next + '</b>. Estimated wait is about <b>' + w.wait + ' min</b>. <a href="#" data-act="token">Get my token</a>';
+        return 'The walk-in queue is closed right now. ' + (s.next ? 'We reopen ' + (s.next.tomorrow ? 'tomorrow' : s.next.day) + ' at <b>' + fmt(s.next.at) + '</b>.' : '') + ' You can still <a href="#" data-act="book">book an appointment</a>.';
+      }
+      if (/book|appoint|reserve|slot|schedule/.test(t)) return 'I can get you started right away. <a href="#" data-act="book">Open the booking form</a> or visit the <a href="' + (M.root || '') + 'booking.html">booking page</a>. The team confirms every request by email.';
+      if (/price|cost|how much|service|menu|treatment|facial|colou?r|cut|bridal|keratin/.test(t)) {
+        var sv = (M.services || []).slice(0, 5).map(function (x) { return '<li>' + esc(x.name) + ' <b>from $' + x.from + '</b></li>'; }).join('');
+        return 'A few favourites:<ul>' + sv + '</ul><a href="' + (M.root || '') + 'services.html">See every service &amp; price</a>';
+      }
+      if (/hour|open|close|when|time/.test(t)) return 'Our hours:<ul>' + (C.hours || []).map(function (r) { return '<li>' + esc(r[0]) + ' <b>' + esc(r[1]) + '</b></li>'; }).join('') + '</ul>' + (s.closed || !s.open ? 'We\'re closed right now.' : 'We\'re open now.');
+      if (/where|address|location|map|direction|find you/.test(t)) return 'You\'ll find us at <b>' + esc((C.address || []).join(', ')) + '</b>. <a href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(C.mapQuery || '') + '" target="_blank" rel="noopener">Open in Maps</a>';
+      if (/cancel|reschedule|policy|refund|late/.test(t)) return 'Please give at least <b>24 hours\' notice</b> to change or cancel an appointment. Message us and we\'ll move it for you.';
+      if (/person|human|agent|staff|call|phone|whatsapp|email|contact|talk|speak/.test(t)) return 'Of course — our team is happy to help.<ul>' + (wa ? '<li><a href="' + wa + '" target="_blank" rel="noopener">Chat on WhatsApp</a></li>' : '') + (C.phone ? '<li>Call <a href="tel:' + String(C.phone).replace(/[^+\d]/g, '') + '">' + esc(C.phone) + '</a></li>' : '') + (C.email ? '<li><a href="mailto:' + esc(C.email) + '">' + esc(C.email) + '</a></li>' : '') + '</ul>';
+      if (/thank|thanks|great|perfect/.test(t)) return 'You\'re very welcome! Anything else I can help with?';
+      return 'I\'m a virtual assistant, so I might have missed that. I can help with booking, services &amp; prices, opening hours and today\'s queue, or you can <a href="' + (wa || 'contact.html') + '"' + (wa ? ' target="_blank" rel="noopener"' : '') + '>talk to a person</a>.';
+    }
+    function ask(q) {
+      add('me', esc(q)); setChips([]);
+      var norm = q === 'Book an appointment' ? 'book' : q === 'Live queue today' ? 'queue' : q;
+      bot(reply(norm), 700); setTimeout(function () { setChips(MAIN); }, 800);
+    }
+    function open() {
+      panel.hidden = false; launch.setAttribute('aria-expanded', 'true'); d.classList.add('is-open'); teaser.hidden = true; try { sessionStorage.setItem('mc_open', '1'); } catch (e) {}
+      if (!greeted) { greeted = true; bot('Hi, I\'m the MIRELLE virtual assistant. How can I help today?', 500); setTimeout(function () { setChips(MAIN); }, 600); }
+      setTimeout(function () { inp.focus(); }, 60);
+    }
+    function close() { panel.hidden = true; launch.setAttribute('aria-expanded', 'false'); d.classList.remove('is-open'); try { sessionStorage.removeItem('mc_open'); } catch (e) {} launch.focus(); }
+    launch.addEventListener('click', function () { panel.hidden ? open() : close(); });
+    $('.mc-x', d).addEventListener('click', close);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !panel.hidden) close(); });
+    form.addEventListener('submit', function (e) { e.preventDefault(); var v = inp.value.trim(); if (!v) return; inp.value = ''; ask(v); });
+    $('.mc-teaser button', d).addEventListener('click', function () { teaser.hidden = true; try { sessionStorage.setItem('mc_t', '1'); } catch (e) {} });
+    var seen = false; try { seen = sessionStorage.getItem('mc_t'); if (sessionStorage.getItem('mc_open')) open(); } catch (e) {}
+    if (!seen) setTimeout(function () { if (panel.hidden) teaser.hidden = false; }, 6000);
+  }
+
+  function init() { mount(); renderBoard(); setInterval(renderBoard, 5000); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
