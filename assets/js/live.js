@@ -121,7 +121,7 @@
     var root = $('#live-board'); if (!root) return;
     var s = build(new Date()), w = waitText(s), me = myToken();
     var cs = s.slots[s.nowIdx];
-    var key = [s.closed, s.open, s.before, w && w.serving, w && w.next, me && me.n, s.slots.map(function (x) { return x.st[0]; }).join('')].join('|');
+    var key = [s.closed, s.open, s.before, w && w.serving, w && w.next, s.slots.map(function (x) { return x.st[0]; }).join('')].join('|');
     var status = s.closed ? ['closed', 'Closed today'] : s.open ? ['open', 'Open now'] : s.before ? ['soon', 'Opens at ' + fmt(s.hours[0])] : ['closed', 'Closed for today'];
     var reopen = s.before && s.hours ? 'Opens today at ' + fmt(s.hours[0]) : (s.closed || !s.open) && s.next ? 'Reopens ' + (s.next.tomorrow ? 'tomorrow' : s.next.day) + ' at ' + fmt(s.next.at) : '';
 
@@ -144,9 +144,7 @@
           + '<div class="lb-meta"><div><span>Next up</span><b>' + w.next + '</b></div><div><span>Est. wait</span><b>~' + w.wait + ' min</b></div></div>';
         if (cs) html += '<div class="lb-now"><div class="lb-nowtop"><span>' + esc(cs.svc) + ' · ' + cs.by + '</span><em id="lb-pct">0%</em></div><div class="lb-bar"><i id="lb-fill"></i></div></div>';
       } else html += '<div class="lb-k">Walk-in queue</div><div class="lb-big lb-big--sm">' + (s.before ? 'Opening soon' : 'Closed') + '</div><p class="lb-p">' + (reopen || 'See opening hours below.') + '</p>';
-      if (me && w) { var ahead = Math.max(0, me.n - (s.nowIdx >= 0 ? s.nowIdx + 1 : 0)); html += '<div class="lb-mine"><span>Your token</span><b>' + tok(me.n) + '</b><em>' + (ahead ? ahead + ' ahead of you' : 'You\'re up next') + '</em></div>'; }
-      else if (w) html += '<button type="button" class="btn-white lb-get" data-lb-token><div>Get my token</div>' + PLUS + '</button>';
-      else html += '<a href="booking.html" data-lb-book class="btn-white lb-get"><div>Book appointment</div>' + PLUS + '</a>';
+      html += '<a href="booking.html" data-lb-book class="btn-white lb-get"><div>Book now</div>' + PLUS + '</a>';
       html += '</div><div class="lb-card lb-sched"><div class="lb-k">Today\'s schedule</div>';
       if (s.closed) html += '<p class="lb-p">The studio is closed today. ' + (reopen ? reopen + '.' : '') + '</p>';
       else {
@@ -161,7 +159,6 @@
       }
       html += '</div></div>';
       var main = $('#lb-main', root); main.innerHTML = html; main.classList.remove('is-swap'); void main.offsetWidth; main.classList.add('is-swap');
-      var g = main.querySelector('[data-lb-token]'); if (g) g.addEventListener('click', function () { getToken(build(new Date())); renderBoard(); });
       var c = main.querySelector('[data-lb-book]'); if (c) c.addEventListener('click', function (e) { var b2 = document.querySelector('[data-calendly]'); if (b2) { e.preventDefault(); b2.click(); } });
     }
     /* smooth live progress (no rebuild) */
@@ -196,7 +193,7 @@
     }
     function wire(el) {
       [].forEach.call(el.querySelectorAll('[data-act]'), function (b) {
-        b.addEventListener('click', function (e) { var a = b.getAttribute('data-act'); if (a === 'book') { e.preventDefault(); openBooking(); } if (a === 'token') { e.preventDefault(); ask('Get my token'); } });
+        b.addEventListener('click', function (e) { var a = b.getAttribute('data-act'); if (a === 'book') { e.preventDefault(); openBooking(); } if (a === 'sched') { e.preventDefault(); if (window.MIRELLE_SCHED) window.MIRELLE_SCHED.open(); } });
       });
     }
     function openBooking() { var c = document.querySelector('[data-calendly]'); if (c) c.click(); else location.href = (M.root || '') + 'booking.html'; }
@@ -213,9 +210,8 @@
       if (/^(hi|hello|hey|salam|good (morning|afternoon|evening))\b/.test(t)) return 'Hello! I\'m the MIRELLE virtual assistant. I can help with booking, services, hours and today\'s queue.';
       if (/token|queue|wait|serving|live|turn|serial/.test(t)) {
         var w = waitText(s);
-        if (/get|my|join|take/.test(t) && w) { var k = getToken(s); renderBoard(); return 'You\'re in. Your walk-in token is <b>' + tok(k.n) + '</b>. Now serving <b>' + w.serving + '</b>, so expect roughly ' + w.wait + '+ minutes. You can follow it on the “Live studio board” on the home page.'; }
-        if (w) return 'Now serving <b>' + w.serving + '</b>, next is <b>' + w.next + '</b>. Estimated wait is about <b>' + w.wait + ' min</b>. <a href="#" data-act="token">Get my token</a>';
-        return 'The walk-in queue is closed right now. ' + (s.next ? 'We reopen ' + (s.next.tomorrow ? 'tomorrow' : s.next.day) + ' at <b>' + fmt(s.next.at) + '</b>.' : '') + ' You can still <a href="#" data-act="book">book an appointment</a>.';
+        if (w) return 'Now serving <b>' + w.serving + '</b>, next is <b>' + w.next + '</b>. Estimated wait is about <b>' + w.wait + ' min</b>. <a href="#" data-act="sched">See the live schedule</a> or <a href="#" data-act="book">Book now</a>.';
+        return 'The studio is closed right now. ' + (s.next ? 'We reopen ' + (s.next.tomorrow ? 'tomorrow' : s.next.day) + ' at <b>' + fmt(s.next.at) + '</b>.' : '') + ' You can still <a href="#" data-act="book">book an appointment</a>.';
       }
       if (/book|appoint|reserve|slot|schedule/.test(t)) return 'I can get you started right away. <a href="#" data-act="book">Open the booking form</a> or visit the <a href="' + (M.root || '') + 'booking.html">booking page</a>. The team confirms every request by email.';
       if (/price|cost|how much|service|menu|treatment|facial|colou?r|cut|bridal|keratin/.test(t)) {
@@ -249,6 +245,47 @@
     if (!seen) setTimeout(function () { if (panel.hidden) teaser.hidden = false; }, 6000);
   }
 
-  function init() { mount(); renderBoard(); setInterval(renderBoard, 1000); }
+  /* ===================== FLOATING LIVE SCHEDULE ===================== */
+  function mountSched() {
+    if ($('.ms-launch')) return;
+    var host = $('.mc'); if (!host) return;
+    var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'ms-launch'; btn.setAttribute('aria-label', 'Open live schedule');
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none"><rect x="3.5" y="5" width="17" height="15" rx="3" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="15" r="2.6" stroke="currentColor" stroke-width="1.5"/><path d="M12 13.9v1.2l.8.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg><i class="ms-live"></i><span class="ms-tip">Live schedule</span>';
+    host.appendChild(btn);
+    var m = document.createElement('div'); m.className = 'ms'; m.hidden = true;
+    m.innerHTML = '<div class="ms-bg"></div><section class="ms-card" role="dialog" aria-label="Live schedule"><button type="button" class="ms-x" aria-label="Close">×</button><div class="ms-body"></div></section>';
+    document.body.appendChild(m);
+    var body = $('.ms-body', m), timer = null;
+    function paint() {
+      var s = build(new Date()), w = waitText(s), cs = s.slots[s.nowIdx];
+      var status = s.closed ? ['closed', 'Closed today'] : s.open ? ['open', 'Open now'] : s.before ? ['soon', 'Opens at ' + fmt(s.hours[0])] : ['closed', 'Closed for today'];
+      var reopen = s.before && s.hours ? 'Opens today at ' + fmt(s.hours[0]) : (s.closed || !s.open) && s.next ? 'Reopens ' + (s.next.tomorrow ? 'tomorrow' : s.next.day) + ' at ' + fmt(s.next.at) : '';
+      var key = [s.closed, s.open, s.before, w && w.serving, s.slots.map(function (x) { return x.st[0]; }).join('')].join('|');
+      if (body.dataset.k !== key) {
+        body.dataset.k = key; var h = '<div class="ms-top"><span class="lb-pill is-' + status[0] + '"><i></i><b>' + status[1] + '</b></span><span class="lb-clock"><i class="lb-live-dot"></i><em class="ms-clock"></em></span></div><h3>Live schedule</h3>';
+        if (w) h += '<div class="ms-serving"><div><span>Now serving</span><b class="ms-big">' + w.serving + '</b></div><div><span>Next up</span><b>' + w.next + '</b></div><div><span>Est. wait</span><b>~' + w.wait + ' min</b></div></div>' + (cs ? '<div class="ms-now"><div class="lb-nowtop"><span>' + esc(cs.svc) + ' · ' + cs.by + '</span><em id="ms-pct">0%</em></div><div class="lb-bar"><i id="ms-fill"></i></div></div>' : '');
+        else h += '<p class="ms-p">' + (s.closed ? 'The studio is closed today. ' : '') + (reopen ? reopen + '.' : '') + '</p>';
+        if (!s.closed) {
+          var list = s.slots, st = 0; if (s.nowIdx >= 0) st = Math.max(0, s.nowIdx - 1); else if (s.firstUp >= 0) st = s.firstUp; if (s.after) st = Math.max(0, list.length - 5);
+          h += '<ul class="lb-list ms-list">';
+          list.slice(st, st + 6).forEach(function (x) { h += '<li class="is-' + x.st + '"><time>' + fmt(x.t) + '</time><div><b>' + esc(x.svc) + '</b><span>' + x.who + ' · with ' + x.by + '</span></div><em>' + (x.st === 'done' ? 'Done' : x.st === 'now' ? 'In the chair' : 'Upcoming') + '</em></li>'; });
+          h += '</ul>';
+        }
+        h += '<a href="booking.html" class="btn-black ms-book"><div>Book now</div>' + PLUS + '</a>';
+        body.innerHTML = h; body.classList.remove('is-in'); void body.offsetWidth; body.classList.add('is-in');
+        $('.ms-book', body).addEventListener('click', function (e) { e.preventDefault(); close(); var b2 = document.querySelector('[data-calendly]'); if (b2) b2.click(); else location.href = (M.root || '') + 'booking.html'; });
+      }
+      var f = $('#ms-fill', body); if (f && cs) { f.style.width = (cs.p * 100).toFixed(1) + '%'; $('#ms-pct', body).textContent = Math.round(cs.p * 100) + '%'; }
+      var ck = $('.ms-clock', body); if (ck) ck.textContent = fmt(s.now.getHours() * 60 + s.now.getMinutes()) + ' · live';
+    }
+    function open() { body.dataset.k = ''; paint(); m.hidden = false; requestAnimationFrame(function () { m.classList.add('is-open'); }); document.documentElement.style.overflow = 'hidden'; clearInterval(timer); timer = setInterval(paint, 1000); $('.ms-x', m).focus(); }
+    function close() { m.classList.remove('is-open'); setTimeout(function () { m.hidden = true; }, 300); document.documentElement.style.overflow = ''; clearInterval(timer); btn.focus(); }
+    btn.addEventListener('click', open);
+    $('.ms-x', m).addEventListener('click', close); $('.ms-bg', m).addEventListener('click', close);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !m.hidden) close(); });
+    window.MIRELLE_SCHED = { open: open, close: close };
+  }
+
+  function init() { mount(); mountSched(); renderBoard(); setInterval(renderBoard, 1000); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
