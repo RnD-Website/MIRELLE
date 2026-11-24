@@ -250,7 +250,7 @@
     if ($('.ms-launch')) return;
     var host = $('.mc'); if (!host) return;
     var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'ms-launch'; btn.setAttribute('aria-label', 'Open live schedule');
-    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none"><rect x="3.5" y="5" width="17" height="15" rx="3" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="15" r="2.6" stroke="currentColor" stroke-width="1.5"/><path d="M12 13.9v1.2l.8.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg><i class="ms-live"></i><span class="ms-tip">Live schedule</span>';
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="6.2" stroke="currentColor" stroke-width="1.7"/><path d="M12 8.6V12l2.4 1.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.2 8.2a8.8 8.8 0 0 1 2-2.7M19.8 8.2a8.8 8.8 0 0 0-2-2.7M4.2 15.8a8.8 8.8 0 0 0 2 2.7M19.8 15.8a8.8 8.8 0 0 1-2 2.7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".75"/></svg><i class="ms-live"></i><span class="ms-tip">Live schedule</span>';
     host.appendChild(btn);
     var m = document.createElement('div'); m.className = 'ms'; m.hidden = true;
     m.innerHTML = '<div class="ms-bg"></div><section class="ms-card" role="dialog" aria-label="Live schedule"><button type="button" class="ms-x" aria-label="Close">×</button><div class="ms-body"></div></section>';
