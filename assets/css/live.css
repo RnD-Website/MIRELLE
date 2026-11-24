@@ -186,3 +186,8 @@
 .ms-launch:hover .ms-live{background:#C23A2E;border-color:#fff}
 @keyframes msPing{0%{box-shadow:0 0 0 0 rgba(255,255,255,.7)}70%{box-shadow:0 0 0 .5rem rgba(255,255,255,0)}100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}}
 .ms-tip{background:#C23A2E}
+
+/* live schedule label: always visible so the button explains itself */
+.ms-tip{opacity:1!important;font-weight:500;letter-spacing:.01em;box-shadow:0 .5rem 1.4rem rgba(194,58,46,.32)}
+.ms-tip::after{content:"";position:absolute;left:100%;top:50%;translate:-1px -50%;border:.32rem solid transparent;border-left-color:#C23A2E;border-right:0}
+@media (max-width:520px){.ms-tip{display:block!important;font-size:.7rem;padding:.38rem .65rem;right:calc(100% + .55rem)}}
