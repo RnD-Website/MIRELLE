@@ -76,50 +76,111 @@
   ];
 
   /* ===================== HOME BOARD ===================== */
+  var PLUS = '<div class="plus-icon"><svg viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.5"/></svg></div>';
+  var board = { key: '', feed: [], nextEv: 0, evN: 0, started: false };
+
+  function statsFor(s, w) {
+    if (s.closed || !s.open) return [['Chairs free', '4', '/4'], ['Avg. wait', '—', ''], ['Booked today', String(s.slots.length ? Math.round(s.slots.length * .82) : 0), ''], ['Walk-ins waiting', '0', '']];
+    var m = Math.floor(s.mins), busy = 2 + (Math.floor(m / 11) % 3), wait = w ? w.wait : 10;
+    wait = Math.max(5, wait + ((Math.floor(m / 3) % 5) - 2));
+    var done = s.slots.filter(function (x) { return x.st !== 'up'; }).length;
+    return [['Chairs free', String(4 - busy), '/4'], ['Avg. wait', '~' + wait, ' min'], ['Booked today', String(Math.round(s.slots.length * .82) + Math.floor(m / 37) % 3), ''], ['Walk-ins waiting', String(1 + (Math.floor(m / 7) % 4)), '']];
+  }
+  function setStat(el, v) {
+    var n = el.querySelector('.lb-num'); if (n.textContent === v) return;
+    n.textContent = v; el.classList.remove('is-tick'); void el.offsetWidth; el.classList.add('is-tick');
+  }
+  function evText(s, w) {
+    var serving = w ? w.serving : 'M-001', pick = function (a) { return a[Math.floor(Math.random() * a.length)]; };
+    var by = pick(PEOPLE), svc = pick(SERV), tk = tok(2 + Math.floor(Math.random() * 14)), up = s.slots.filter(function (x) { return x.st === 'up'; });
+    var t = up.length ? fmt(pick(up).t) : '';
+    var opts = [
+      ['call', tk + ' called to the chair', 'with ' + by],
+      ['book', 'New booking confirmed', svc + (t ? ' · ' + t : '')],
+      ['done', by + ' finished a ' + svc, 'chair is being prepared'],
+      ['walk', 'Walk-in token ' + tk + ' issued', 'estimated ' + (8 + Math.floor(Math.random() * 20)) + ' min'],
+      ['slot', 'Slot just opened', (t || 'later today') + ' · ' + svc]
+    ];
+    return pick(opts);
+  }
+  function addEvent(s, w, silent) {
+    var ev = evText(s, w), ul = $('#lb-feed'); if (!ul) return;
+    var li = document.createElement('li'); li.className = 'is-' + ev[0] + (silent ? '' : ' is-new'); li.dataset.t = Date.now() - (silent || 0);
+    li.innerHTML = '<i></i><div><b>' + esc(ev[1]) + '</b><span>' + esc(ev[2]) + '</span></div><time></time>';
+    ul.insertBefore(li, ul.firstChild);
+    while (ul.children.length > 5) { var last = ul.lastChild; last.classList.add('is-out'); setTimeout(function (n) { return function () { n.remove(); }; }(last), 400); if (ul.children.length > 7) ul.lastChild.remove(); else break; }
+  }
+  function ago() {
+    [].forEach.call(document.querySelectorAll('#lb-feed li'), function (li) {
+      var d = Math.max(0, Math.floor((Date.now() - (+li.dataset.t)) / 1000)), t = li.querySelector('time');
+      t.textContent = d < 8 ? 'just now' : d < 60 ? d + 's ago' : Math.floor(d / 60) + ' min ago';
+    });
+  }
+
   function renderBoard() {
     var root = $('#live-board'); if (!root) return;
     var s = build(new Date()), w = waitText(s), me = myToken();
-    var html = '';
+    var cs = s.slots[s.nowIdx];
+    var key = [s.closed, s.open, s.before, w && w.serving, w && w.next, me && me.n, s.slots.map(function (x) { return x.st[0]; }).join('')].join('|');
     var status = s.closed ? ['closed', 'Closed today'] : s.open ? ['open', 'Open now'] : s.before ? ['soon', 'Opens at ' + fmt(s.hours[0])] : ['closed', 'Closed for today'];
     var reopen = s.before && s.hours ? 'Opens today at ' + fmt(s.hours[0]) : (s.closed || !s.open) && s.next ? 'Reopens ' + (s.next.tomorrow ? 'tomorrow' : s.next.day) + ' at ' + fmt(s.next.at) : '';
-    html += '<div class="lb-top"><span class="lb-pill is-' + status[0] + '"><i></i>' + status[1] + '</span><span class="lb-clock">' + fmt(s.now.getHours() * 60 + s.now.getMinutes()) + ' · live</span></div>';
-    html += '<div class="lb-grid"><div class="lb-card lb-serving">';
-    if (w) {
-      html += '<div class="lb-k">Now serving</div><div class="lb-big">' + w.serving + '</div>'
-        + '<div class="lb-meta"><div><span>Next up</span><b>' + w.next + '</b></div><div><span>Est. wait</span><b>~' + w.wait + ' min</b></div></div>';
-      var cs = s.slots[s.nowIdx];
-      if (cs) html += '<div class="lb-now"><div class="lb-nowtop"><span>' + esc(cs.svc) + ' · ' + cs.by + '</span><em>' + Math.round(cs.p * 100) + '%</em></div><div class="lb-bar"><i style="width:' + Math.round(cs.p * 100) + '%"></i></div></div>';
-    } else {
-      html += '<div class="lb-k">Walk-in queue</div><div class="lb-big lb-big--sm">' + (s.before ? 'Opening soon' : 'Closed') + '</div><p class="lb-p">' + (reopen || 'See opening hours below.') + '</p>';
+
+    if (!root.querySelector('#lb-main')) {
+      root.innerHTML = '<div class="lb-top"><span class="lb-pill"><i></i><b></b></span><span class="lb-clock"><i class="lb-live-dot"></i><em></em></span></div>'
+        + '<div id="lb-main"></div>'
+        + '<div class="lb-stats" id="lb-stats">' + ['Chairs free', 'Avg. wait', 'Booked today', 'Walk-ins waiting'].map(function (l) { return '<div class="lb-stat"><span>' + l + '</span><div><b class="lb-num">–</b><em></em></div></div>'; }).join('') + '</div>'
+        + '<div class="lb-card lb-feedcard"><div class="lb-feedhead"><div class="lb-k">Live activity</div><span class="lb-streaming"><i></i>Streaming</span></div><ul id="lb-feed" class="lb-feed"></ul></div>'
+        + '<div class="lb-note" id="lb-note"><span>Schedule update</span><p></p></div>';
+      board.key = '';
     }
-    if (me && w) {
-      var ahead = Math.max(0, me.n - (s.nowIdx >= 0 ? s.nowIdx + 1 : 0));
-      html += '<div class="lb-mine"><span>Your token</span><b>' + tok(me.n) + '</b><em>' + (ahead ? ahead + ' ahead of you' : 'You\'re up next') + '</em></div>';
-    } else if (w) {
-      html += '<button type="button" class="btn-white lb-get" data-lb-token><div>Get my token</div><div class="plus-icon"><svg viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.5"/></svg></div></button>';
-    } else {
-      html += '<a href="booking.html" data-lb-book class="btn-white lb-get"><div>Book appointment</div><div class="plus-icon"><svg viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.5"/></svg></div></a>';
+    /* header */
+    var pill = $('.lb-pill', root); pill.className = 'lb-pill is-' + status[0]; $('b', pill).textContent = status[1];
+    $('.lb-clock em', root).textContent = fmt(s.now.getHours() * 60 + s.now.getMinutes()) + ' · live';
+
+    /* main grid: rebuild only when something meaningful changed (no flicker) */
+    if (board.key !== key) {
+      board.key = key; var html = '<div class="lb-grid"><div class="lb-card lb-serving">';
+      if (w) {
+        html += '<div class="lb-k">Now serving</div><div class="lb-big" data-v="' + w.serving + '">' + w.serving + '</div>'
+          + '<div class="lb-meta"><div><span>Next up</span><b>' + w.next + '</b></div><div><span>Est. wait</span><b>~' + w.wait + ' min</b></div></div>';
+        if (cs) html += '<div class="lb-now"><div class="lb-nowtop"><span>' + esc(cs.svc) + ' · ' + cs.by + '</span><em id="lb-pct">0%</em></div><div class="lb-bar"><i id="lb-fill"></i></div></div>';
+      } else html += '<div class="lb-k">Walk-in queue</div><div class="lb-big lb-big--sm">' + (s.before ? 'Opening soon' : 'Closed') + '</div><p class="lb-p">' + (reopen || 'See opening hours below.') + '</p>';
+      if (me && w) { var ahead = Math.max(0, me.n - (s.nowIdx >= 0 ? s.nowIdx + 1 : 0)); html += '<div class="lb-mine"><span>Your token</span><b>' + tok(me.n) + '</b><em>' + (ahead ? ahead + ' ahead of you' : 'You\'re up next') + '</em></div>'; }
+      else if (w) html += '<button type="button" class="btn-white lb-get" data-lb-token><div>Get my token</div>' + PLUS + '</button>';
+      else html += '<a href="booking.html" data-lb-book class="btn-white lb-get"><div>Book appointment</div>' + PLUS + '</a>';
+      html += '</div><div class="lb-card lb-sched"><div class="lb-k">Today\'s schedule</div>';
+      if (s.closed) html += '<p class="lb-p">The studio is closed today. ' + (reopen ? reopen + '.' : '') + '</p>';
+      else {
+        var list = s.slots, start = 0;
+        if (s.nowIdx >= 0) start = Math.max(0, s.nowIdx - 1); else if (s.firstUp >= 0) start = s.firstUp;
+        if (s.after) start = Math.max(0, list.length - 4);
+        html += '<ul class="lb-list">';
+        list.slice(start, start + 5).forEach(function (x) {
+          html += '<li class="is-' + x.st + '"><time>' + fmt(x.t) + '</time><div><b>' + esc(x.svc) + '</b><span>' + x.who + ' · with ' + x.by + '</span></div><em>' + (x.st === 'done' ? 'Done' : x.st === 'now' ? 'In the chair' : 'Upcoming') + '</em></li>';
+        });
+        html += '</ul>';
+      }
+      html += '</div></div>';
+      var main = $('#lb-main', root); main.innerHTML = html; main.classList.remove('is-swap'); void main.offsetWidth; main.classList.add('is-swap');
+      var g = main.querySelector('[data-lb-token]'); if (g) g.addEventListener('click', function () { getToken(build(new Date())); renderBoard(); });
+      var c = main.querySelector('[data-lb-book]'); if (c) c.addEventListener('click', function (e) { var b2 = document.querySelector('[data-calendly]'); if (b2) { e.preventDefault(); b2.click(); } });
     }
-    html += '</div><div class="lb-card lb-sched"><div class="lb-k">Today\'s schedule</div>';
-    if (s.closed) html += '<p class="lb-p">The studio is closed today. ' + reopen + '.</p>';
-    else {
-      var list = s.slots, start = 0;
-      if (s.nowIdx >= 0) start = Math.max(0, s.nowIdx - 1); else if (s.firstUp >= 0) start = s.firstUp;
-      if (s.after) start = Math.max(0, list.length - 4);
-      html += '<ul class="lb-list">';
-      list.slice(start, start + 5).forEach(function (x) {
-        var lab = x.st === 'done' ? 'Done' : x.st === 'now' ? 'In the chair' : 'Upcoming';
-        html += '<li class="is-' + x.st + '"><time>' + fmt(x.t) + '</time><div><b>' + esc(x.svc) + '</b><span>' + x.who + ' · with ' + x.by + '</span></div><em>' + lab + '</em></li>';
-      });
-      html += '</ul>';
+    /* smooth live progress (no rebuild) */
+    var f = $('#lb-fill'); if (f && cs) { f.style.width = (cs.p * 100).toFixed(1) + '%'; $('#lb-pct').textContent = Math.round(cs.p * 100) + '%'; }
+
+    /* stats tick */
+    var st = statsFor(s, w), cells = root.querySelectorAll('.lb-stat');
+    st.forEach(function (x, i) { setStat(cells[i], x[1]); cells[i].querySelector('em').textContent = x[2]; });
+
+    /* feed */
+    if (!board.started) {
+      board.started = true; board.nextEv = Date.now() + 2500;
+      for (var k = 0; k < 4; k++) addEvent(s, w, (4 - k) * 21000 + 4000);
     }
-    html += '</div></div>';
-    var note = NOTES[Math.floor(Date.now() / 7000) % NOTES.length];
-    html += '<div class="lb-note ' + note[1] + '"><span>Schedule update</span><p>' + note[0] + '</p></div>';
-    root.innerHTML = html;
-    var g = root.querySelector('[data-lb-token]');
-    if (g) g.addEventListener('click', function () { getToken(build(new Date())); renderBoard(); });
-    var c = root.querySelector('[data-lb-book]'); if (c) c.addEventListener('click', function (e) { var b = document.querySelector('[data-calendly]'); if (b) { e.preventDefault(); b.click(); } });
+    if (Date.now() >= board.nextEv) { addEvent(s, w); board.nextEv = Date.now() + 4200 + Math.random() * 3800; }
+    ago();
+    var noteEl = $('#lb-note', root), note = NOTES[Math.floor(Date.now() / 8000) % NOTES.length];
+    if (noteEl.dataset.i !== String(note[0])) { noteEl.dataset.i = note[0]; noteEl.className = 'lb-note ' + note[1]; var p = $('p', noteEl); p.style.animation = 'none'; void p.offsetWidth; p.style.animation = ''; p.textContent = note[0]; }
   }
 
   /* ===================== CHAT ===================== */
@@ -196,6 +257,6 @@
     if (!seen) setTimeout(function () { if (panel.hidden) teaser.hidden = false; }, 6000);
   }
 
-  function init() { mount(); renderBoard(); setInterval(renderBoard, 5000); }
+  function init() { mount(); renderBoard(); setInterval(renderBoard, 1000); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();

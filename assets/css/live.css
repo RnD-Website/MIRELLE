@@ -98,3 +98,47 @@
 
 .mc-log::-webkit-scrollbar{display:none}
 .mc-panel{height:36rem}
+
+/* ===== live motion ===== */
+.lb-live-dot{display:inline-block;width:.55em;height:.55em;border-radius:50%;background:#e5484d;margin-right:.6em;animation:lbBlink 1.2s infinite}
+@keyframes lbBlink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.25;transform:scale(.7)}}
+.lb-clock{display:inline-flex;align-items:center}.lb-clock em{font-style:normal}
+#lb-main.is-swap .lb-card{animation:lbIn .7s var(--ease,cubic-bezier(.2,.7,.2,1)) both}
+#lb-main.is-swap .lb-sched{animation-delay:.08s}
+@keyframes lbIn{from{opacity:0;translate:0 1em}to{opacity:1;translate:0 0}}
+.lb-big{background:linear-gradient(100deg,#fff 40%,#CDA07F 50%,#fff 60%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:lbShine 5s linear infinite}
+@keyframes lbShine{from{background-position:120% 0}to{background-position:-120% 0}}
+.lb-bar i{transition:width 1s linear;background:linear-gradient(90deg,#CDA07F,#F3E7DA,#CDA07F);background-size:200% 100%;animation:lbBar 2.2s linear infinite;box-shadow:0 0 .8em rgba(205,160,127,.6)}
+@keyframes lbBar{to{background-position:-200% 0}}
+.lb-list .is-now{animation:lbGlow 2.4s ease-in-out infinite}
+@keyframes lbGlow{50%{box-shadow:0 0 0 1px rgba(205,160,127,.55),0 .5em 1.6em rgba(205,160,127,.25)}}
+.lb-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1.2em}
+.lb-stat{background:#fff;border-radius:var(--r-card,1.6em);padding:1.3em 1.5em;box-shadow:var(--sh-card,0 .3em 2em rgba(43,29,22,.06));position:relative;overflow:hidden;transition:translate .35s var(--ease,ease),box-shadow .35s}
+.lb-stat:hover{translate:0 -.2em;box-shadow:var(--sh-hover,0 1.1em 3em rgba(43,29,22,.15))}
+.lb-stat span{display:block;font-size:.74em;letter-spacing:.12em;text-transform:uppercase;color:#8A5A3B;margin-bottom:.6em}
+.lb-stat div{display:flex;align-items:baseline;gap:.3em}
+.lb-num{font-family:var(--serif,serif);font-style:italic;font-weight:400;font-size:2.4em;line-height:1;display:inline-block}
+.lb-stat em{font-style:normal;font-size:.85em;opacity:.6}
+.lb-stat.is-tick .lb-num{animation:lbTick .6s var(--ease,cubic-bezier(.2,.7,.2,1))}
+.lb-stat.is-tick::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 20% 100%,rgba(205,160,127,.35),transparent 60%);animation:lbFlash .9s ease-out forwards;pointer-events:none}
+@keyframes lbTick{0%{opacity:0;transform:translateY(60%) scale(.9)}100%{opacity:1;transform:none}}
+@keyframes lbFlash{from{opacity:1}to{opacity:0}}
+.lb-feedcard{padding:1.6em 2em}
+.lb-feedhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:.6em}
+.lb-feedhead .lb-k{margin:0}
+.lb-streaming{display:inline-flex;align-items:center;gap:.5em;font-size:.75em;color:#3a8f5f;background:#EEF1E4;padding:.4em .9em;border-radius:99em}
+.lb-streaming i{width:.5em;height:.5em;border-radius:50%;background:#3fae6a;animation:lbPulse 1.8s infinite}
+.lb-feed{list-style:none;margin:0;padding:0;position:relative}
+.lb-feed li{display:grid;grid-template-columns:1.6em 1fr auto;gap:1em;align-items:center;padding:.85em 0;border-top:1px solid #F0E3D6;max-height:5em;overflow:hidden;transition:opacity .4s,max-height .4s,padding .4s}
+.lb-feed li:first-child{border-top:0}
+.lb-feed i{width:.7em;height:.7em;border-radius:50%;background:#CDA07F;justify-self:center}
+.lb-feed .is-call i{background:#2B1D16}.lb-feed .is-book i{background:#3fae6a}.lb-feed .is-slot i{background:#e0a23a}.lb-feed .is-walk i{background:#8A5A3B}
+.lb-feed b{display:block;font-weight:500;font-size:.95em}
+.lb-feed span{display:block;font-size:.8em;opacity:.6;margin-top:.1em}
+.lb-feed time{font-size:.75em;color:#8A5A3B;white-space:nowrap}
+.lb-feed li.is-new{animation:lbFeedIn .7s var(--ease,cubic-bezier(.2,.7,.2,1)) both,lbNewBg 2.4s ease-out}
+.lb-feed li.is-out{opacity:0;max-height:0;padding:0;border:0}
+@keyframes lbFeedIn{from{opacity:0;max-height:0;padding-top:0;padding-bottom:0;transform:translateY(-.8em)}to{opacity:1;max-height:5em}}
+@keyframes lbNewBg{from{background:rgba(205,160,127,.22)}to{background:transparent}}
+@media (max-width:991px){.lb-stats{grid-template-columns:repeat(2,1fr)}}
+@media (prefers-reduced-motion:reduce){.lb-big,.lb-bar i,.lb-live-dot,.lb-list .is-now,.lb-feed li,.lb-stat .lb-num{animation:none!important}.lb-big{-webkit-text-fill-color:#fff}}
