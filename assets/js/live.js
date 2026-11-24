@@ -130,11 +130,11 @@
     d.innerHTML = '<button type="button" class="mc-launch" aria-label="Open chat with MIRELLE concierge" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H11l-4.2 3.6c-.5.4-1.3.1-1.3-.6V16A2.5 2.5 0 0 1 4 13.5v-8Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="9" cy="9.5" r="1" fill="currentColor"/><circle cx="12.5" cy="9.5" r="1" fill="currentColor"/><circle cx="16" cy="9.5" r="1" fill="currentColor"/></svg><i class="mc-dot"></i></button>'
       + '<div class="mc-teaser" hidden>Hi! Need help booking? <button type="button" aria-label="Dismiss">×</button></div>'
       + '<section class="mc-panel" role="dialog" aria-label="MIRELLE concierge chat" hidden><header><div class="mc-av">M</div><div><b>MIRELLE Concierge</b><span><i></i>Virtual assistant · online</span></div><button type="button" class="mc-x" aria-label="Close chat">×</button></header>'
-      + '<div class="mc-log" role="log" aria-live="polite"></div><div class="mc-chips"></div>'
+      + '<div class="mc-log" role="log" aria-live="polite"></div>'
       + '<form class="mc-form"><input type="text" placeholder="Ask about services, hours, booking…" aria-label="Your message" autocomplete="off" maxlength="200"><button type="submit" aria-label="Send"><svg viewBox="0 0 17 18" fill="none"><path d="M0.5 9h15M10 3l6 6-6 6" stroke="currentColor" stroke-width="1.5"/></svg></button></form></section>';
     document.body.appendChild(d);
-    var launch = $('.mc-launch', d), panel = $('.mc-panel', d), log = $('.mc-log', d), chips = $('.mc-chips', d), form = $('.mc-form', d), inp = $('input', form), teaser = $('.mc-teaser', d);
-    var greeted = false;
+    var launch = $('.mc-launch', d), panel = $('.mc-panel', d), log = $('.mc-log', d), chips = document.createElement('div'), form = $('.mc-form', d), inp = $('input', form), teaser = $('.mc-teaser', d);
+    var greeted = false; chips.className = 'mc-chips';
 
     function add(who, html) { var m = document.createElement('div'); m.className = 'mc-m ' + who; m.innerHTML = html; log.appendChild(m); log.scrollTop = log.scrollHeight; return m; }
     function bot(html, delay) {
@@ -148,7 +148,10 @@
     }
     function openBooking() { var c = document.querySelector('[data-calendly]'); if (c) c.click(); else location.href = (M.root || '') + 'booking.html'; }
     function setChips(list) {
-      chips.innerHTML = ''; list.forEach(function (q) { var b = document.createElement('button'); b.type = 'button'; b.textContent = q; b.addEventListener('click', function () { ask(q); }); chips.appendChild(b); });
+      if (chips.parentNode) chips.parentNode.removeChild(chips);
+      chips.innerHTML = ''; if (!list.length) return;
+      list.forEach(function (q) { var b = document.createElement('button'); b.type = 'button'; b.textContent = q; b.addEventListener('click', function () { ask(q); }); chips.appendChild(b); });
+      log.appendChild(chips); log.scrollTop = log.scrollHeight;
     }
     var MAIN = ['Book an appointment', 'Services & prices', 'Opening hours', 'Live queue today', 'Talk to a person'];
 
