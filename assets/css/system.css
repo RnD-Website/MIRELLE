@@ -105,3 +105,12 @@
 .btn-white:hover,.btn-white.absolute:hover,.sd-book:hover{background:#1a1a1a!important;background-color:#1a1a1a!important;color:#fff!important}
 .btn-black:hover *,.submit-button:hover *,.cf-submit:hover *,.ar-btn:hover *{color:#1a1a1a!important}
 .btn-white:hover *,.sd-book:hover *{color:#fff!important}
+
+/* FAQ (mobile/tablet): keep the cards inside the two vertical guide lines */
+@media (max-width:900px){
+  .fq-sec{padding-left:0;padding-right:0;overflow:hidden}
+  .fq-wrap{padding-left:calc(var(--web-padding,1em) + 1.1em);padding-right:calc(var(--web-padding,1em) + 1.1em)}
+  .fq-item{padding:0 1.2em;max-width:100%}
+  .fq-item summary{font-size:1.12em;gap:1em;padding:1.25em 0}
+  .fq-item summary,.fq-item p{overflow-wrap:anywhere}
+}
