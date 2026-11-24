@@ -84,7 +84,7 @@
 
 /* home hero: show the whole lounge photo (no crop); a blurred copy fills the extra height */
 .hero__section-bg{position:relative;width:100%;overflow:hidden;background:#CDA07E}
-.hero__section-bg::before{content:"";position:absolute;inset:-6%;background:url(../images/hero-lounge.webp) 50% 40%/cover no-repeat;filter:blur(34px) saturate(1.05)}
+.hero__section-bg::before{content:"";position:absolute;inset:-6%;background:url(../images/hero-makeup.webp) 50% 40%/cover no-repeat;filter:blur(34px) saturate(1.05)}
 .hero__bg-img--web{z-index:1;inset:auto 0 auto 0;top:calc((100% - 48.12vw)*.4);height:48.12vw;width:100%;object-fit:cover;object-position:50% 50%;-webkit-mask-image:linear-gradient(180deg,transparent 0,#000 16%,#000 88%,transparent 100%);mask-image:linear-gradient(180deg,transparent 0,#000 16%,#000 88%,transparent 100%)}
 @media (max-width:991px){
   .hero__bg-img--tablet,.hero__bg-img--mobile{z-index:1;object-fit:cover;object-position:14% 100%}
